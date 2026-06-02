@@ -15,24 +15,24 @@ from telethon import TelegramClient, events
 from telethon.tl.functions.messages import GetHistoryRequest
 import asyncio
 import aiohttp
-
+ 
 client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
 processed_ids = set()
-
+ 
 def message_matches(text):
     text = text.lower()
     has_kw1 = any(kw in text for kw in KEYWORDS_GROUP1)
     has_kw2 = any(kw in text for kw in KEYWORDS_GROUP2)
     has_stop = any(sw in text for sw in STOP_WORDS)
     return has_kw1 and has_kw2 and not has_stop
-
+ 
 async def send_message_async(text, link, msg_id):
     async with aiohttp.ClientSession() as session:
         payload = {'chat_id': TARGET_CHANNEL, 'text': f"[{text}]({link})", 'parse_mode': 'Markdown', 'disable_web_page_preview': True}
         async with session.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage', json=payload) as resp:
             if resp.status == 200:
                 processed_ids.add(msg_id)
-
+ 
 async def process_message(msg, channel_id, text=None):
     if msg.id in processed_ids:
         return
@@ -41,12 +41,11 @@ async def process_message(msg, channel_id, text=None):
         return
     link = f"https://t.me/c/{str(channel_id)[4:]}/{msg.id}"
     await send_message_async(text, link, msg.id)
-
-@client.on(events.NewMessage())
+ 
+@client.on(events.NewMessage(chats=SOURCE_CHANNELS))
 async def handler(event):
-    if event.chat_id in SOURCE_CHANNELS:
-        await process_message(event, event.chat_id)
-
+    await process_message(event, event.chat_id)
+ 
 async def poll_channels():
     while True:
         for channel_id in SOURCE_CHANNELS:
@@ -59,10 +58,10 @@ async def poll_channels():
             except:
                 continue
         await asyncio.sleep(5)
-
+ 
 async def main():
     await client.start()
     asyncio.create_task(poll_channels())
     await client.run_until_disconnected()
-
+ 
 asyncio.run(main())
