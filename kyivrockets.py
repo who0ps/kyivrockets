@@ -1,9 +1,12 @@
 #!/usr/bin/python3
+# kyivrockets v1.7
+
 API_ID = '1234567'
 API_HASH = '12345678901234567890123456789012'
 BOT_TOKEN = '1234567890:abc'
-SOURCE_CHANNELS = [-1001223955273, -1001641260594] # kpszsu, war_monitor
+SOURCE_CHANNELS = [-1001223955273, -1001641260594]  # kpszsu, war_monitor
 TARGET_CHANNEL = '@Kyivrockets'
+PROCESSED_LOG = 'processed.log'
 KEYWORDS_GROUP1 = ['бр ', 'кр ', 'балісти', 'крилат', 'ракет', 'швидкісн', 'ціль', 'кинджал', 'циркон']
 KEYWORDS_GROUP2 = ['київ', 'столиц', 'києв']
 STOP_WORDS = ['попередньо', 'обстріл', 'ліквід', 'напад', 'тримаймо', 'силами', 'рятувальн', 'житлов', 'будин', 'люд', 'будівл',
@@ -16,8 +19,21 @@ import asyncio
 import aiohttp
 
 client = TelegramClient('rkts', API_ID, API_HASH)
-processed_ids = set()
 peers = {}
+
+def load_processed():
+    try:
+        with open(PROCESSED_LOG, 'r') as f:
+            return {int(line.strip()) for line in f if line.strip()}
+    except FileNotFoundError:
+        return set()
+
+def save_processed(msg_id):
+    with open(PROCESSED_LOG, 'a') as f:
+        f.write(f"{msg_id}\n")
+        f.flush()
+
+processed_ids = load_processed()
 
 def message_matches(text):
     text = text.lower()
@@ -32,6 +48,7 @@ async def send_message_async(text, link, msg_id):
         async with session.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage', json=payload) as resp:
             if resp.status == 200:
                 processed_ids.add(msg_id)
+                save_processed(msg_id)
             else:
                 print(f"send error {resp.status}: {await resp.text()}")
 
