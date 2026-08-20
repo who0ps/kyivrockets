@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# kyivrockets v1.7
+# kyivrockets v1.8
 
 API_ID = '1234567'
 API_HASH = '12345678901234567890123456789012'
@@ -7,7 +7,7 @@ BOT_TOKEN = '1234567890:abc'
 SOURCE_CHANNELS = [-1001223955273, -1001641260594]  # kpszsu, war_monitor
 TARGET_CHANNEL = '@Kyivrockets'
 PROCESSED_LOG = 'processed.log'
-KEYWORDS_GROUP1 = ['бр ', 'кр ', 'балісти', 'крилат', 'ракет', 'швидкісн', 'ціль', 'кинджал', 'циркон']
+KEYWORDS_GROUP1 = ['бр ', 'кр ', 'балісти', 'крилат', 'ракет', 'швидкісн', 'ціль', 'кинджал', 'циркон', 'калібр']
 KEYWORDS_GROUP2 = ['київ', 'столиц', 'києв']
 STOP_WORDS = ['попередньо', 'обстріл', 'ліквід', 'напад', 'тримаймо', 'силами', 'рятувальн', 'житлов', 'будин', 'люд', 'будівл',
               'загроз', 'статисти', 'руйнуван', 'загальна', 'перебувал', 'конус', 'план', 'відом', 'бпла', 'базуван', 'існування',
@@ -47,9 +47,9 @@ async def send_message_async(text, link, msg_id):
         payload = {'chat_id': TARGET_CHANNEL, 'text': f"[{text}]({link})", 'parse_mode': 'Markdown', 'disable_web_page_preview': True}
         async with session.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage', json=payload) as resp:
             if resp.status == 200:
-                processed_ids.add(msg_id)
                 save_processed(msg_id)
             else:
+                processed_ids.discard(msg_id)
                 print(f"send error {resp.status}: {await resp.text()}")
 
 async def process_message(msg, channel_id, text=None):
@@ -58,6 +58,7 @@ async def process_message(msg, channel_id, text=None):
     text = text or msg.raw_text
     if not message_matches(text):
         return
+    processed_ids.add(msg.id)
     link = f"https://t.me/c/{str(channel_id)[4:]}/{msg.id}"
     await send_message_async(text, link, msg.id)
 
