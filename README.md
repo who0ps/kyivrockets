@@ -1,4 +1,4 @@
-# [kyivrockets](https://t.me/kyivrockets)
+# [Kyivrockets](https://t.me/kyivrockets)
 Юзербот для сповіщень про ракети на Київ
 
 По змінних (* - значить варто її змінити): 
